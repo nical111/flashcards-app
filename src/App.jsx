@@ -96,6 +96,17 @@ function App() {
     }
   }
 
+  const handleExportJSON = () => {
+    const data = JSON.stringify(flashcards.map(({ front, back }) => ({ front, back })), null, 2)
+    const blob = new Blob([data], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'flashcards.txt'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const toggleMenu = () => setMenuOpen(prev => !prev)
   const changeSection = (section) => {
     setActiveSection(section)
@@ -190,8 +201,8 @@ function App() {
       {menuOpen && (
         <div style={{ position: 'fixed', top: '60px', left: 0, width: '220px', background: '#1e1e1e', padding: '1rem', color: 'white', height: '100vh', zIndex: 5, boxShadow: '2px 0 8px rgba(0,0,0,0.3)' }}>
           <p style={{ cursor: 'pointer', marginBottom: '1rem' }} onClick={() => changeSection('review')}>📅 Da ripassare oggi</p>
+          <p style={{ cursor: 'pointer', marginBottom: '1rem' }} onClick={() => changeSection('train')}>🏋️ Allenamento libero</p>
           <p style={{ cursor: 'pointer', marginBottom: '1rem' }} onClick={() => changeSection('all')}>🗂️ Tutte le flashcard</p>
-          <p style={{ cursor: 'pointer', marginBottom: '1rem' }} onClick={() => changeSection('practice')}>🧠 Allenamento libero</p>
           <p style={{ cursor: 'pointer' }} onClick={() => changeSection('add')}>➕ Aggiungi / importa</p>
         </div>
       )}
@@ -200,21 +211,21 @@ function App() {
         {activeSection === 'review' && (
           <>
             <h2>📅 Da ripassare oggi ({today})</h2>
-            {currentCard ? (
-              <CardComponent card={currentCard} onReview={(score) => handleReview(currentCard.index, score)} />
+            {cardsDue.length > 0 ? (
+              <CardComponent card={currentCard} onReview={handleReview} />
             ) : (
-              <p>Nessuna flashcard da ripassare.</p>
+              <p>Nessuna flashcard da ripassare oggi.</p>
             )}
           </>
         )}
 
-        {activeSection === 'practice' && (
+        {activeSection === 'train' && (
           <>
-            <h2>🧠 Allenamento libero</h2>
+            <h2>🏋️ Allenamento libero</h2>
             {flashcards.length > 0 ? (
-              <CardComponent card={currentCard} onReview={(score) => handleReview(currentIndex, score)} />
+              <CardComponent card={currentCard} onReview={handleReview} />
             ) : (
-              <p>Nessuna flashcard disponibile.</p>
+              <p>Non ci sono flashcard.</p>
             )}
           </>
         )}
@@ -239,34 +250,19 @@ function App() {
 
         {activeSection === 'add' && (
           <>
-            <h2>{editIndex !== null ? '✏️ Modifica flashcard' : '➕ Aggiungi una flashcard'}</h2>
+            <h2>➕ Aggiungi una flashcard</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-              <input
-                type="text"
-                placeholder="Fronte"
-                value={front}
-                onChange={(e) => setFront(e.target.value)}
-                style={{ padding: '0.5rem' }}
-              />
-              <input
-                type="text"
-                placeholder="Retro"
-                value={back}
-                onChange={(e) => setBack(e.target.value)}
-                style={{ padding: '0.5rem' }}
-              />
+              <input type="text" placeholder="Fronte" value={front} onChange={(e) => setFront(e.target.value)} style={{ padding: '0.5rem' }} />
+              <input type="text" placeholder="Retro" value={back} onChange={(e) => setBack(e.target.value)} style={{ padding: '0.5rem' }} />
               <button onClick={handleAddCard}>{editIndex !== null ? '💾 Salva modifiche' : '➕ Aggiungi flashcard'}</button>
             </div>
 
             <h2>📥 Importa da ChatGPT (JSON)</h2>
-            <textarea
-              rows="6"
-              placeholder='Incolla qui il JSON delle flashcard...'
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              style={{ width: '100%', fontFamily: 'monospace', padding: '1rem' }}
-            />
+            <textarea rows="6" placeholder='Incolla qui il JSON delle flashcard...' value={importText} onChange={(e) => setImportText(e.target.value)} style={{ width: '100%', fontFamily: 'monospace', padding: '1rem', boxSizing: 'border-box' }} />
             <button onClick={handleImport}>📩 Importa flashcard</button>
+
+            <h2>📤 Esporta flashcard</h2>
+            <button onClick={handleExportJSON}>📝 Esporta come TXT (copiabile)</button>
           </>
         )}
       </div>
